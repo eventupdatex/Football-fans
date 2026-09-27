@@ -85,16 +85,6 @@ function PageLoader({ show }: { show: boolean }) {
             </motion.div>
             <div className="absolute right-2 bottom-2 w-10 h-14 border-2 border-slate-300 border-b-0 rounded-t-sm opacity-60" />
           </div>
-          <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-slate-800">Football Fans Tribe</p>
-          <p className="mt-1 text-[11px] font-semibold text-slate-500">Loading the pitch…</p>
-          <div className="mt-4 h-1 w-28 rounded-full bg-slate-200 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-brand-500 to-emerald-500"
-              initial={{ width: '0%' }}
-              animate={{ width: '100%' }}
-              transition={{ duration: 0.95 }}
-            />
-          </div>
         </motion.div>
       )}
     </AnimatePresence>
