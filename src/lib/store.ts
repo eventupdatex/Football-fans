@@ -1,7 +1,5 @@
 /**
- * Client-side store (localStorage).
- * When you add a real backend later, swap these helpers for API calls.
- * Admin + checkout both use this so Paystack orders land in Admin → Orders.
+ * Client-side store (localStorage). Supabase can replace these later.
  */
 import { NEWS as SEED_NEWS, PRODUCTS as SEED_PRODUCTS, PODCASTS as SEED_PODCASTS, NewsArticle, Product } from '../data';
 
@@ -11,6 +9,8 @@ const KEYS = {
   orders: 'fft_orders',
   subs: 'fft_subs',
   settings: 'fft_settings',
+  ads: 'fft_ad_bookings',
+  users: 'fft_users',
 } as const;
 
 export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'cancelled';
@@ -28,6 +28,36 @@ export type StoreOrder = {
 };
 
 export type Subscriber = { email: string; joinedAt: string };
+
+export type AdBookingStatus = 'pending' | 'approved' | 'rejected' | 'live' | 'paid';
+
+export type AdBooking = {
+  id: string;
+  createdAt: string;
+  status: AdBookingStatus;
+  packageId: string;
+  packageName: string;
+  packagePriceLabel: string;
+  amountNaira: number;
+  company: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  bannerUrl: string;
+  message?: string;
+  paystackRef?: string;
+  mode?: 'live' | 'demo';
+};
+
+export type CrmUser = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: 'customer' | 'advertiser' | 'staff';
+  note?: string;
+  createdAt: string;
+};
 
 export type SiteSettings = {
   siteName: string;
@@ -107,10 +137,64 @@ export function getPodcasts() {
   return SEED_PODCASTS;
 }
 
+export const AD_PACKAGE_NGN: Record<string, number> = {
+  a1: 450000,
+  a2: 280000,
+  a3: 350000,
+  a4: 500000,
+};
+
+export function getAdBookings(): AdBooking[] {
+  return read(KEYS.ads, [] as AdBooking[]);
+}
+export function saveAdBookings(list: AdBooking[]) {
+  write(KEYS.ads, list);
+}
+export function addAdBooking(b: AdBooking) {
+  const all = getAdBookings();
+  all.unshift(b);
+  saveAdBookings(all);
+  return b;
+}
+export function updateAdBookingStatus(id: string, status: AdBookingStatus) {
+  saveAdBookings(getAdBookings().map((b) => (b.id === id ? { ...b, status } : b)));
+}
+
+export function getUsers(): CrmUser[] {
+  return read(KEYS.users, [] as CrmUser[]);
+}
+export function saveUsers(list: CrmUser[]) {
+  write(KEYS.users, list);
+}
+export function upsertUserFromCustomer(
+  c: { name: string; email: string; phone: string },
+  role: CrmUser['role'] = 'customer',
+) {
+  const all = getUsers();
+  const i = all.findIndex((u) => u.email.toLowerCase() === c.email.toLowerCase());
+  if (i >= 0) {
+    all[i] = { ...all[i], name: c.name, phone: c.phone, role };
+    saveUsers(all);
+    return all[i];
+  }
+  const u: CrmUser = {
+    id: `u-${Date.now()}`,
+    name: c.name,
+    email: c.email,
+    phone: c.phone,
+    role,
+    createdAt: new Date().toISOString(),
+  };
+  all.unshift(u);
+  saveUsers(all);
+  return u;
+}
+
 export function adminStats() {
   const orders = getOrders();
   const paid = orders.filter((o) => o.status === 'paid' || o.status === 'shipped');
   const revenue = paid.reduce((s, o) => s + o.totalNaira, 0);
+  const ads = getAdBookings();
   return {
     newsCount: getNews().length,
     productCount: getProducts().length,
@@ -118,5 +202,7 @@ export function adminStats() {
     paidCount: paid.length,
     revenue,
     subCount: getSubscribers().length,
+    adPending: ads.filter((a) => a.status === 'pending' || a.status === 'paid').length,
+    userCount: getUsers().length,
   };
 }
