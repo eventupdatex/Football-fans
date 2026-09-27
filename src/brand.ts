@@ -1,8 +1,8 @@
-/** Pitch-ready brand — change these when white-labeling for a client */
+/** Pitch-ready brand — change when white-labeling */
 export const BRAND = {
   name: 'Fans',
-  tagline: 'Quality news you can trust',
-  welcomeLine: 'Your home for updates and stories that matter',
+  tagline: 'Quality football news you can trust',
+  welcomeLine: 'Your home for match updates, stories and the beautiful game',
   short: 'Fans',
   supportEmail: 'hello@fans.news',
 } as const;
