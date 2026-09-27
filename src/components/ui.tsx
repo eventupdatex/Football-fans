@@ -33,9 +33,9 @@ function Img({ src, alt, className }: { src: string; alt: string; className?: st
 
 function AdSlot({ label = 'Advertisement' }: { label?: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 px-4 py-5 text-center">
+    <div className="w-full min-h-[90px] rounded-2xl border border-dashed border-slate-200 bg-white/80 px-4 py-5 text-center flex flex-col items-center justify-center">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-      <p className="mt-1 text-xs text-slate-500">Partner with Football Fans Tribe</p>
+      <p className="mt-1 text-xs text-slate-500">Ad space · responsive slot</p>
     </div>
   );
 }
