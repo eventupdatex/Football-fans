@@ -6,7 +6,9 @@ export type PageId =
   | 'podcasts'
   | 'about'
   | 'advertise'
-  | 'contact';
+  | 'contact'
+  | 'checkout'
+  | 'admin';
 
 export interface LiveMatch {
   id: string;
@@ -115,7 +117,7 @@ export const ALL_MATCHES: ScheduledMatch[] = [
 export const NEWS: NewsArticle[] = [
   {
     id: 'n1',
-    title: '\u201cI still train like a kid from the streets\u201d \u2014 exclusive Super Eagles interview',
+    title: 'I still train like a kid from the streets — exclusive Super Eagles interview',
     summary: 'A candid conversation about pressure, family, and what Naija fans never see after the final whistle.',
     body: 'In our Lagos studio, the striker spoke openly about recovery routines, social media noise, and why the green-white-green still means everything. He described the moment he almost quit at 17, the coach who refused to let him, and how fans in Lagos, London and Atlanta fuel every sprint.',
     category: 'Interview',
@@ -154,7 +156,7 @@ export const NEWS: NewsArticle[] = [
   },
   {
     id: 'n4',
-    title: 'Preview: Nigeria vs Ghana \u2014 lineups, form and three storylines',
+    title: 'Preview: Nigeria vs Ghana — lineups, form and three storylines',
     summary: 'Everything you need before kick-off: expected XI, key battles, and fan predictions from the Tribe.',
     body: 'Form guide, injury news, and the tactical questions both coaches face. Plus what the podcast panel called earlier in the week.',
     category: 'Preview',
@@ -215,8 +217,8 @@ export const CREST_COLORS = [
 ];
 
 export const AD_PACKAGES = [
-  { id: 'a1', name: 'Homepage Banner', price: 'From \u20a6450k/wk', desc: 'Prime placement on every home visit for Naija football fans.', reach: '1.9M-aligned audience' },
-  { id: 'a2', name: 'In-Article Native', price: 'From \u20a6280k/wk', desc: 'Inside interviews, previews and match analysis.', reach: 'Readers mid-session' },
+  { id: 'a1', name: 'Homepage Banner', price: 'From ₦450k/wk', desc: 'Prime placement on every home visit for Naija football fans.', reach: '1.9M-aligned audience' },
+  { id: 'a2', name: 'In-Article Native', price: 'From ₦280k/wk', desc: 'Inside interviews, previews and match analysis.', reach: 'Readers mid-session' },
   { id: 'a3', name: 'Podcast / Live show mention', price: 'Custom', desc: 'Integrated reads on Fans Tribe Live and Matchday Podcast.', reach: 'Audio & live viewers' },
   { id: 'a4', name: 'Shop takeover', price: 'Custom', desc: 'Brand the merch grid for a launch weekend.', reach: 'Buyers' },
 ];
