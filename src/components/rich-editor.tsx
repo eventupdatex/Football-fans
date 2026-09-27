@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import {
   Bold, Italic, Underline, Highlighter, Heading1, Heading2, Heading3,
-  List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Link2, Quote, Undo2, Redo2,
+  List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Link2, Quote, Undo2, Redo2, ImagePlus,
 } from 'lucide-react';
+import { pickAndCompressImage } from '../lib/image';
 
 type Props = {
   value: string;
@@ -23,6 +24,18 @@ function RichEditor({ value, onChange, placeholder }: Props) {
     }
   }, [value]);
 
+  const insertImage = async () => {
+    try {
+      const dataUrl = await pickAndCompressImage(1200, 0.72);
+      ref.current?.focus();
+      const html = `<figure class="article-img"><img src="${dataUrl}" alt="" /><figcaption></figcaption></figure><p><br/></p>`;
+      document.execCommand('insertHTML', false, html);
+      if (ref.current) onChange(ref.current.innerHTML);
+    } catch {
+      /* cancelled or failed */
+    }
+  };
+
   const tools: { icon: React.ReactNode; title: string; run: () => void }[] = [
     { icon: <Undo2 className="h-3.5 w-3.5" />, title: 'Undo', run: () => exec('undo') },
     { icon: <Redo2 className="h-3.5 w-3.5" />, title: 'Redo', run: () => exec('redo') },
@@ -33,6 +46,7 @@ function RichEditor({ value, onChange, placeholder }: Props) {
     { icon: <Italic className="h-3.5 w-3.5" />, title: 'Italic', run: () => exec('italic') },
     { icon: <Underline className="h-3.5 w-3.5" />, title: 'Underline', run: () => exec('underline') },
     { icon: <Highlighter className="h-3.5 w-3.5" />, title: 'Highlight', run: () => exec('hiliteColor', '#fef08a') },
+    { icon: <ImagePlus className="h-3.5 w-3.5" />, title: 'Insert image (compressed)', run: () => { void insertImage(); } },
     { icon: <Quote className="h-3.5 w-3.5" />, title: 'Quote', run: () => exec('formatBlock', 'blockquote') },
     { icon: <List className="h-3.5 w-3.5" />, title: 'Bullet list', run: () => exec('insertUnorderedList') },
     { icon: <ListOrdered className="h-3.5 w-3.5" />, title: 'Numbered list', run: () => exec('insertOrderedList') },
@@ -60,7 +74,7 @@ function RichEditor({ value, onChange, placeholder }: Props) {
             onMouseDown={(e) => {
               e.preventDefault();
               t.run();
-              if (ref.current) onChange(ref.current.innerHTML);
+              if (ref.current && t.title !== 'Insert image (compressed)') onChange(ref.current.innerHTML);
             }}
             className="rounded-lg p-1.5 text-slate-600 hover:bg-white hover:text-slate-900"
           >
@@ -73,13 +87,13 @@ function RichEditor({ value, onChange, placeholder }: Props) {
         contentEditable
         suppressContentEditableWarning
         data-placeholder={placeholder || 'Write the full story…'}
-        className="min-h-[160px] max-h-[320px] overflow-y-auto px-3 py-2.5 text-sm text-slate-800 leading-relaxed outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400"
+        className="min-h-[160px] max-h-[360px] overflow-y-auto px-3 py-2.5 text-sm text-slate-800 leading-relaxed outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2 [&_figure]:my-3"
         onInput={() => {
           if (ref.current) onChange(ref.current.innerHTML);
         }}
       />
       <p className="px-3 py-1.5 text-[10px] text-slate-400 border-t border-slate-100 bg-slate-50">
-        Headings · Bold · Italic · Underline · Highlight · Lists · Align · Links (Word-style tools)
+        Headings · Bold · Highlight · Image (pick from phone/file, auto-compressed) · Lists · Links
       </p>
     </div>
   );
