@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Component, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PageId, Product, NewsArticle } from './data';
 import { PageLoader } from './components/ui';
@@ -6,6 +6,9 @@ import { Shell, type CartLine } from './components/layout';
 import { HomePage, NewsPage, ArticleView } from './components/pages-home';
 import { ScoresPage, ShopPage, ProductDetail } from './components/pages-scores-shop';
 import { PodcastsPage, AboutPage, AdvertisePage, ContactPage, CartDrawer } from './components/pages-more';
+import { CheckoutPage, OrderSuccess } from './components/pages-checkout';
+import { AdminPage } from './components/pages-admin';
+import type { StoreOrder } from './lib/store';
 
 const fade = {
   initial: { opacity: 0, y: 8 },
@@ -14,6 +17,37 @@ const fade = {
   transition: { duration: 0.2 },
 };
 
+class ErrorBoundary extends Component<{ children: ReactNode }, { err: Error | null }> {
+  state = { err: null as Error | null };
+  static getDerivedStateFromError(err: Error) {
+    return { err };
+  }
+  render() {
+    if (this.state.err) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6 bg-mesh">
+          <div className="max-w-sm text-center space-y-3">
+            <p className="text-lg font-black text-slate-900">Something went wrong</p>
+            <p className="text-sm text-slate-500">The page recovered. Try going home.</p>
+            <button
+              type="button"
+              onClick={() => {
+                this.setState({ err: null });
+                window.location.hash = '';
+                window.location.reload();
+              }}
+              className="rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-black text-white"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [booting, setBooting] = useState(true);
   const [page, setPage] = useState<PageId>('home');
@@ -21,6 +55,7 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [article, setArticle] = useState<NewsArticle | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
+  const [lastOrder, setLastOrder] = useState<StoreOrder | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setBooting(false), 900);
@@ -29,11 +64,12 @@ export default function App() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [page, article?.id, product?.id]);
+  }, [page, article?.id, product?.id, lastOrder?.id]);
 
   const go = (p: PageId) => {
     setArticle(null);
     setProduct(null);
+    setLastOrder(null);
     setPage(p);
     window.scrollTo(0, 0);
   };
@@ -51,50 +87,78 @@ export default function App() {
   };
 
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
-  const showCart = page === 'shop' || Boolean(product);
+  const showCart = page === 'shop' || page === 'checkout' || Boolean(product);
 
   return (
-    <div className="min-h-screen bg-mesh text-slate-900 font-sans">
-      <PageLoader show={booting} />
-      {!booting && (
-        <Shell
-          page={page}
-          setPage={go}
-          cartCount={cartCount}
-          onOpenCart={() => setCartOpen(true)}
-          showCart={showCart}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div key={article ? `a-${article.id}` : product ? `p-${product.id}` : page} {...fade}>
-              {article ? (
-                <ArticleView article={article} onBack={() => setArticle(null)} />
-              ) : product ? (
-                <ProductDetail product={product} onBack={() => setProduct(null)} onAdd={addToCart} />
-              ) : (
-                <>
-                  {page === 'home' && <HomePage onRead={setArticle} onGo={go} />}
-                  {page === 'news' && <NewsPage onRead={setArticle} />}
-                  {page === 'scores' && <ScoresPage />}
-                  {page === 'shop' && (
-                    <ShopPage cart={cart} onOpenCart={() => setCartOpen(true)} onOpenProduct={setProduct} />
-                  )}
-                  {page === 'podcasts' && <PodcastsPage />}
-                  {page === 'about' && <AboutPage />}
-                  {page === 'advertise' && <AdvertisePage onContact={() => go('contact')} />}
-                  {page === 'contact' && <ContactPage />}
-                </>
-              )}
-            </motion.div>
-          </AnimatePresence>
-          <CartDrawer
-            open={cartOpen}
-            onClose={() => setCartOpen(false)}
-            lines={cart}
-            onQty={(i, q) => setCart((c) => c.map((l, idx) => (idx === i ? { ...l, qty: q } : l)))}
-            onRemove={(i) => setCart((c) => c.filter((_, idx) => idx !== i))}
-          />
-        </Shell>
-      )}
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-mesh text-slate-900 font-sans">
+        <PageLoader show={booting} />
+        {!booting && (
+          <Shell
+            page={page}
+            setPage={go}
+            cartCount={cartCount}
+            onOpenCart={() => setCartOpen(true)}
+            showCart={showCart}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={
+                  lastOrder
+                    ? `order-${lastOrder.id}`
+                    : article
+                      ? `a-${article.id}`
+                      : product
+                        ? `p-${product.id}`
+                        : page
+                }
+                {...fade}
+              >
+                {lastOrder ? (
+                  <OrderSuccess order={lastOrder} onShop={() => go('shop')} onHome={() => go('home')} />
+                ) : article ? (
+                  <ArticleView article={article} onBack={() => setArticle(null)} />
+                ) : product ? (
+                  <ProductDetail product={product} onBack={() => setProduct(null)} onAdd={addToCart} />
+                ) : page === 'checkout' ? (
+                  <CheckoutPage
+                    lines={cart}
+                    onBack={() => {
+                      setCartOpen(true);
+                      go('shop');
+                    }}
+                    onClearCart={() => setCart([])}
+                    onPaid={(order) => setLastOrder(order)}
+                  />
+                ) : page === 'admin' ? (
+                  <AdminPage onExit={() => go('home')} />
+                ) : (
+                  <>
+                    {page === 'home' && <HomePage onRead={setArticle} onGo={go} />}
+                    {page === 'news' && <NewsPage onRead={setArticle} />}
+                    {page === 'scores' && <ScoresPage />}
+                    {page === 'shop' && (
+                      <ShopPage cart={cart} onOpenCart={() => setCartOpen(true)} onOpenProduct={setProduct} />
+                    )}
+                    {page === 'podcasts' && <PodcastsPage />}
+                    {page === 'about' && <AboutPage />}
+                    {page === 'advertise' && <AdvertisePage onContact={() => go('contact')} />}
+                    {page === 'contact' && <ContactPage />}
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
+            <CartDrawer
+              open={cartOpen}
+              onClose={() => setCartOpen(false)}
+              lines={cart}
+              onQty={(i, q) => setCart((c) => c.map((l, idx) => (idx === i ? { ...l, qty: q } : l)))}
+              onRemove={(i) => setCart((c) => c.filter((_, idx) => idx !== i))}
+              onCheckout={() => go('checkout')}
+            />
+          </Shell>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
