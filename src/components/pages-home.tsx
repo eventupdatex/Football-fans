@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { ChevronRight, Clock, ArrowLeft, Share2, Facebook, Twitter, Link2, Radio } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  ChevronRight, Clock, ArrowLeft, Share2, Facebook, Twitter, Link2, Radio,
+} from 'lucide-react';
 import { PageId, NEWS, NewsArticle, IMAGES } from '../data';
 import { Img, AdSlot } from './ui';
 import { Newsletter, Footer } from './layout';
@@ -7,27 +9,70 @@ import { Newsletter, Footer } from './layout';
 function HomePage({ onRead, onGo }: { onRead: (a: NewsArticle) => void; onGo: (p: PageId) => void }) {
   const featured = NEWS.filter((n) => n.featured);
   const more = NEWS.filter((n) => !n.featured);
+  const headlines = NEWS.slice(0, 5);
+  const [hi, setHi] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setHi((i) => (i + 1) % headlines.length), 3800);
+    return () => clearInterval(t);
+  }, [headlines.length]);
+
+  const current = headlines[hi] || headlines[0];
+
   return (
-    <div className="space-y-8">
-      <section className="relative rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 min-h-[280px] sm:min-h-[340px]">
-        <Img src={IMAGES.heroStudio} alt="Fans Tribe studio" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-slate-900/30" />
-        <div className="relative p-6 sm:p-10 flex flex-col justify-end min-h-[280px] sm:min-h-[340px]">
+    <div className="space-y-6">
+      <section className="-mx-4 md:mx-0 md:rounded-3xl relative overflow-hidden shadow-xl shadow-slate-200/40 min-h-[52vh] sm:min-h-[380px]">
+        <Img
+          src={current?.image || IMAGES.heroStudio}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-900/25" />
+        <div className="relative p-5 sm:p-10 flex flex-col justify-end min-h-[52vh] sm:min-h-[380px]">
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-400/20 border border-emerald-400/40 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-300">
-            <Radio className="h-3 w-3" /> On air · Naija football
+            <Radio className="h-3 w-3" /> Breaking · Fans Tribe
           </span>
-          <h1 className="mt-3 text-3xl sm:text-4xl font-black text-white tracking-tight leading-[1.15] max-w-lg">
-            Welcome to Football Fans Tribe
-          </h1>
-          <p className="mt-2 text-sm sm:text-base text-white/80 max-w-md leading-relaxed">
-            Interviews from the studio. Match analysis. Podcasts. Live scores. Official merch. Built for the 1.9M family.
-          </p>
+          <button type="button" onClick={() => current && onRead(current)} className="mt-3 text-left active:opacity-90">
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300/90">{current?.category}</p>
+            <h1 className="mt-1.5 text-2xl sm:text-4xl font-black text-white tracking-tight leading-[1.15] max-w-xl">
+              {current?.title || 'Welcome to Football Fans Tribe'}
+            </h1>
+            <p className="mt-2 text-sm text-white/75 max-w-md line-clamp-2">{current?.summary}</p>
+          </button>
+          <div className="mt-4 flex items-center gap-1.5">
+            {headlines.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setHi(i)}
+                className={`h-1.5 rounded-full transition-all ${i === hi ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
+                aria-label={`Headline ${i + 1}`}
+              />
+            ))}
+          </div>
           <div className="mt-5 flex flex-wrap gap-2">
-            <button type="button" onClick={() => onGo('news')} className="rounded-xl bg-white px-4 py-2.5 text-xs font-black text-slate-900">Read stories</button>
-            <button type="button" onClick={() => onGo('podcasts')} className="rounded-xl bg-white/15 border border-white/30 px-4 py-2.5 text-xs font-black text-white">Watch & listen</button>
+            <button type="button" onClick={() => current && onRead(current)} className="rounded-xl bg-white px-4 py-2.5 text-xs font-black text-slate-900">
+              Read headline
+            </button>
+            <button type="button" onClick={() => onGo('news')} className="rounded-xl bg-white/15 border border-white/30 px-4 py-2.5 text-xs font-black text-white">
+              All stories
+            </button>
           </div>
         </div>
       </section>
+
+      <div className="-mx-4 md:mx-0 overflow-hidden bg-slate-900 text-white py-2.5">
+        <div className="flex animate-marquee whitespace-nowrap gap-8 text-[11px] font-bold">
+          {[...NEWS, ...NEWS].map((n, i) => (
+            <button key={`${n.id}-${i}`} type="button" onClick={() => onRead(n)} className="inline-flex items-center gap-2 shrink-0 px-2">
+              <span className="text-emerald-400 uppercase text-[9px] tracking-wider">{n.category}</span>
+              <span className="text-white/90">{n.title}</span>
+              <span className="text-white/30">•</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         {(
           [
@@ -42,7 +87,9 @@ function HomePage({ onRead, onGo }: { onRead: (a: NewsArticle) => void; onGo: (p
           </button>
         ))}
       </div>
+
       <AdSlot label="Sponsored" />
+
       <section className="space-y-4">
         <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Featured stories</h2>
         {featured.map((a) => (
@@ -62,10 +109,13 @@ function HomePage({ onRead, onGo }: { onRead: (a: NewsArticle) => void; onGo: (p
           </button>
         ))}
       </section>
+
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">More to read</h2>
-          <button type="button" onClick={() => onGo('news')} className="text-[11px] font-bold text-brand-600 flex items-center gap-0.5">All <ChevronRight className="h-3.5 w-3.5" /></button>
+          <button type="button" onClick={() => onGo('news')} className="text-[11px] font-bold text-brand-600 flex items-center gap-0.5">
+            All <ChevronRight className="h-3.5 w-3.5" />
+          </button>
         </div>
         <div className="space-y-2.5">
           {more.map((a) => (
@@ -82,6 +132,7 @@ function HomePage({ onRead, onGo }: { onRead: (a: NewsArticle) => void; onGo: (p
           ))}
         </div>
       </section>
+
       <Newsletter />
       <Footer onGo={onGo} />
     </div>
@@ -90,6 +141,9 @@ function HomePage({ onRead, onGo }: { onRead: (a: NewsArticle) => void; onGo: (p
 
 function NewsPage({ onRead }: { onRead: (a: NewsArticle) => void }) {
   const [filter, setFilter] = useState('All');
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
   const cats = ['All', 'Interview', 'Match Analysis', 'Preview', 'Review', 'Naija Fans', 'Feature'];
   const list = filter === 'All' ? NEWS : NEWS.filter((n) => n.category === filter);
   return (
@@ -127,6 +181,9 @@ function NewsPage({ onRead }: { onRead: (a: NewsArticle) => void }) {
 }
 
 function ArticleView({ article, onBack }: { article: NewsArticle; onBack: () => void }) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [article.id]);
   const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://fanstribe.example';
   const shareText = `${article.title} — Football Fans Tribe`;
   const share = async (kind: 'x' | 'fb' | 'copy' | 'native') => {
