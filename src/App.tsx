@@ -27,6 +27,10 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page, article?.id, product?.id]);
+
   const go = (p: PageId) => {
     setArticle(null);
     setProduct(null);
