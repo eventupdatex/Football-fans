@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ChevronRight, Clock, ArrowLeft, Share2, Facebook, Twitter, Link2, Radio,
+  Clock, ArrowLeft, Share2, Facebook, Twitter, Link2,
 } from 'lucide-react';
-import { PageId, NEWS, NewsArticle, IMAGES } from '../data';
+import { PageId, NEWS, NewsArticle } from '../data';
 import { Img, AdSlot } from './ui';
 import { Newsletter, Footer } from './layout';
 import { BRAND } from '../brand';
 
 function HomePage({ onRead, onGo }: { onRead: (a: NewsArticle) => void; onGo: (p: PageId) => void }) {
-  const featured = NEWS.filter((n) => n.featured);
-  const lead = featured[0] || NEWS[0];
+  const [hi, setHi] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setHi((h) => (h + 1) % Math.max(NEWS.length, 1)), 4500);
+    return () => clearInterval(t);
+  }, []);
+  const lead = NEWS[hi] || NEWS[0];
   const rest = NEWS.filter((n) => n.id !== lead?.id);
 
   const cats: { id: PageId | 'all'; label: string }[] = [
@@ -23,7 +27,7 @@ function HomePage({ onRead, onGo }: { onRead: (a: NewsArticle) => void; onGo: (p
   return (
     <div className="space-y-4">
       <div className="pt-1">
-        <p className="text-[11px] text-slate-400 font-medium">Updates you can trust · Sources credited</p>
+        <p className="text-[11px] text-slate-400 font-medium">Football updates you can trust</p>
         <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {cats.map((c) => (
             <button
@@ -48,17 +52,29 @@ function HomePage({ onRead, onGo }: { onRead: (a: NewsArticle) => void; onGo: (p
         <button type="button" onClick={() => onRead(lead)} className="w-full text-left active:opacity-95">
           <div className="relative -mx-4 sm:mx-0 aspect-[16/10] sm:aspect-[2/1] sm:rounded-2xl overflow-hidden bg-slate-100">
             <Img src={lead.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                {lead.category} · {lead.time}
+              </p>
+              <h1 className="mt-1 text-lg sm:text-2xl font-black text-white leading-snug tracking-tight line-clamp-3">
+                {lead.title}
+              </h1>
+              <p className="mt-2 text-[11px] font-semibold text-white/80">Tap to read →</p>
+            </div>
           </div>
-          <p className="mt-3 text-[10px] font-black uppercase tracking-wider text-amber-700">
-            {lead.category} · {lead.time}
-          </p>
-          <h1 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 leading-snug tracking-tight">{lead.title}</h1>
+          <div className="flex justify-center gap-1.5 mt-2">
+            {NEWS.slice(0, Math.min(NEWS.length, 6)).map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 rounded-full transition-all ${i === hi % Math.min(NEWS.length, 6) ? 'w-4 bg-brand-600' : 'w-1.5 bg-slate-300'}`}
+              />
+            ))}
+          </div>
         </button>
       )}
 
-      <div className="min-h-[90px]">
-        <AdSlot label="Advertisement" />
-      </div>
+      <div className="min-h-[90px]"><AdSlot label="Advertisement" /></div>
 
       <div className="divide-y divide-slate-100">
         {rest.map((a) => (
@@ -169,7 +185,6 @@ function ArticleView({ article, onBack }: { article: NewsArticle; onBack: () => 
       <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500">
         <ArrowLeft className="h-4 w-4" /> Back to stories
       </button>
-
       <header className="space-y-3">
         <p className="text-[10px] font-black uppercase tracking-widest text-brand-600">{article.category}</p>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight tracking-tight">{article.title}</h1>
@@ -184,14 +199,12 @@ function ArticleView({ article, onBack }: { article: NewsArticle; onBack: () => 
           </div>
         </div>
       </header>
-
       <figure className="-mx-4 sm:mx-0">
         <div className="relative aspect-[16/10] sm:aspect-[2/1] sm:rounded-2xl overflow-hidden bg-slate-100">
           <Img src={article.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
         </div>
         <figcaption className="px-4 sm:px-0 mt-2 text-[11px] text-slate-400">{article.category} · {BRAND.name}</figcaption>
       </figure>
-
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => share('native')} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2 text-[11px] font-black text-white">
           <Share2 className="h-3.5 w-3.5" /> Share
@@ -202,16 +215,13 @@ function ArticleView({ article, onBack }: { article: NewsArticle; onBack: () => 
         {copied && <span className="text-[10px] font-bold text-emerald-600">Copied</span>}
         <button type="button" onClick={() => share('copy')} className="rounded-xl glass p-2 text-slate-600" aria-label="Copy link"><Link2 className="h-4 w-4" /></button>
       </div>
-
       <div className="min-h-[90px] flex items-center"><AdSlot label="Advertisement" /></div>
-
       <div
         className="text-[15px] sm:text-base text-slate-700 leading-[1.85] space-y-4 [&_h1]:text-xl [&_h1]:font-black [&_h1]:text-slate-900 [&_h2]:text-lg [&_h2]:font-bold [&_img]:rounded-xl [&_img]:my-4 [&_img]:w-full [&_figure]:my-6"
         dangerouslySetInnerHTML={{
           __html: article.body.includes('<') ? article.body : `<p>${article.body}</p>`,
         }}
       />
-
       <div className="min-h-[90px] flex items-center"><AdSlot label="Sponsored" /></div>
       <Newsletter />
     </div>
